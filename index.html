@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bubble Bobble Scroll Story</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+    />
+    <style>
+      html,
+      body {
+        -ms-overflow-style: none; /* IE, Edge */
+        scrollbar-width: none; /* Firefox */
+      }
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, etc. */
+      }
+      body {
+        margin: 0;
+        background-color: #000000;
+        color: white;
+        font-family: "Press Start 2P", cursive;
+      }
+      #booting-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+      }
+      #booting-screen.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      #booting-text {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px #505050;
+      }
+      #loading-bar-container {
+        width: 60%;
+        max-width: 500px;
+        height: 25px;
+        border: 2px solid white;
+        padding: 3px;
+      }
+      #loading-bar {
+        width: 0%;
+        height: 100%;
+        background-color: white;
+      }
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: block;
+        z-index: 5;
+      }
+      #logo-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+      }
+      #logo-container.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      #logo-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .scroll-container {
+        height: 300vh;
+        position: relative;
+      }
+      .asset-loader,
+      #loading-message {
+        display: none;
+      }
+      #settings-btn {
+        position: fixed;
+        top: 25px;
+        right: 25px;
+        z-index: 90;
+        color: white;
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.5s ease-in;
+      }
+      #settings-btn.visible {
+        opacity: 1;
+        visibility: visible;
+      }
+      #settings-btn:hover {
+        opacity: 0.7;
+      }
+      #settings-btn .material-symbols-outlined {
+        font-size: 32px;
+        animation: rotate-gear 8s linear infinite;
+      }
+      @keyframes rotate-gear {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #settings-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 110;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+      #settings-modal.visible {
+        opacity: 1;
+        visibility: visible;
+      }
+      .settings-content {
+        background-color: #000;
+        border: 3px solid white;
+        padding: 2rem;
+        width: 380px;
+      }
+      .settings-content h2 {
+        margin-top: 0;
+        margin-bottom: 2.5rem;
+        font-size: 1.5rem;
+        text-align: center;
+      }
+      .setting-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .setting-item:last-child {
+        margin-bottom: 0;
+      }
+      .checkbox {
+        width: 24px;
+        height: 24px;
+        border: 3px solid white;
+        cursor: pointer;
+        position: relative;
+      }
+      .checkbox.checked::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 14px;
+        height: 14px;
+        background-color: white;
+      }
+      #volume-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 150px;
+        height: 8px;
+        background: #000;
+        border: 2px solid #fff;
+        outline: none;
+      }
+      #volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #fff;
+        cursor: pointer;
+      }
+      #volume-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: #fff;
+        cursor: pointer;
+        border: none;
+      }
+      #volume-value {
+        width: 3ch;
+        text-align: right;
+        margin-left: 1rem;
+      }
+      #fullscreen-btn {
+        border: 3px solid white;
+        padding: 0.8rem;
+        margin-top: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+      #fullscreen-btn:hover {
+        background-color: #333;
+      }
+      #fullscreen-btn .material-symbols-outlined {
+        margin-right: 0.8rem;
+        font-size: 1.2rem;
+      }
+
+      .option-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: 1.5rem;
+        text-align: left;
+      }
+      .option-group > span {
+        margin-bottom: 0.5rem;
+      }
+      .option-group label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      .option-group input[type="radio"] {
+        display: none;
+      }
+      .custom-radio {
+        width: 20px;
+        height: 20px;
+        border: 2px solid white;
+        border-radius: 50%;
+        margin-right: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .custom-radio.checked::after {
+        content: "";
+        width: 10px;
+        height: 10px;
+        background-color: white;
+        border-radius: 50%;
+      }
+      .cursor-preview {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        margin-left: 10px;
+      }
+
+      body.custom-cursor {
+        cursor: none !important;
+      }
+      .custom-cursor #main-canvas {
+        cursor: none !important;
+      }
+
+      #scroll-prompt {
+        position: absolute;
+        bottom: 12vh;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 1.1rem;
+        color: greenyellow;
+        text-shadow: 2px 2px #505050;
+        animation: blink 1.5s infinite alternate;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      @keyframes blink {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0.4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="booting-screen">
+      <div id="booting-text">NOW LOADING...</div>
+      <div id="loading-bar-container">
+        <div id="loading-bar"></div>
+      </div>
+    </div>
+
+    <audio id="bgm" loop>
+      <source src="bgm.mp3" type="audio/mpeg" />
+    </audio>
+
+    <div id="settings-btn">
+      <span class="material-symbols-outlined"> settings </span>
+    </div>
+
+    <div id="settings-modal">
+      <div class="settings-content">
+        <h2>SETTINGS</h2>
+        <div class="setting-item">
+          <span>BGM</span>
+          <div id="bgm-checkbox" class="checkbox"></div>
+        </div>
+        <div class="setting-item">
+          <span>VOLUME</span>
+          <div>
+            <input
+              type="range"
+              id="volume-slider"
+              min="0"
+              max="100"
+              value="75"
+            />
+          </div>
+          <span id="volume-value">75</span>
+        </div>
+
+        <div class="option-group">
+          <span>BUBBLE STYLE</span>
+          <label>
+            <input type="radio" name="bubbleStyle" value="original" checked />
+            <span class="custom-radio checked"></span>
+            <span>Original</span>
+          </label>
+          <label>
+            <input type="radio" name="bubbleStyle" value="stylish" />
+            <span class="custom-radio"></span>
+            <span>Stylish</span>
+          </label>
+        </div>
+
+        <div class="option-group">
+          <span>MOUSE CURSOR</span>
+          <label>
+            <input type="radio" name="mouseCursor" value="default" checked />
+            <span class="custom-radio checked"></span>
+            <span>Default (Dot)</span>
+          </label>
+          <label>
+            <input type="radio" name="mouseCursor" value="green" />
+            <span class="custom-radio"></span>
+            <span>Green Bubble</span>
+            <img
+              src="green copy.png"
+              class="cursor-preview"
+              alt="Green Cursor Preview"
+            />
+          </label>
+          <label>
+            <input type="radio" name="mouseCursor" value="blue" />
+            <span class="custom-radio"></span>
+            <span>Blue Bubble</span>
+            <img
+              src="blue copy.png"
+              class="cursor-preview"
+              alt="Blue Cursor Preview"
+            />
+          </label>
+        </div>
+
+        <div id="fullscreen-btn">
+          <span class="material-symbols-outlined">fullscreen</span>
+          <span>FULLSCREEN</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="logo-container">
+      <img
+        id="logo-image"
+        src="버블보블 업스케일링.jpeg"
+        alt="Bubble Bobble Logo"
+      />
+      <div id="scroll-prompt">SCROLL DOWN TO START</div>
+    </div>
+    <div class="asset-loader">
+      <img id="green-char-img" src="green.png" alt="Green Character" />
+      <img id="blue-char-img" src="blue.png" alt="Blue Character" />
+      <img
+        id="green-cursor-img"
+        src="green copy.png"
+        alt="Green Cursor"
+        style="display: none"
+      />
+      <img
+        id="blue-cursor-img"
+        src="blue copy.png"
+        alt="Blue Cursor"
+        style="display: none"
+      />
+    </div>
+    <canvas id="main-canvas"></canvas>
+    <div class="scroll-container"></div>
+
+    <script>
+      const bootingScreen = document.getElementById("booting-screen");
+      const canvas = document.getElementById("main-canvas");
+      const ctx = canvas.getContext("2d");
+      const logoContainer = document.getElementById("logo-container");
+      const bgm = document.getElementById("bgm");
+      const settingsBtn = document.getElementById("settings-btn");
+      const settingsModal = document.getElementById("settings-modal");
+      const bgmCheckbox = document.getElementById("bgm-checkbox");
+      const volumeSlider = document.getElementById("volume-slider");
+      const volumeValue = document.getElementById("volume-value");
+      const fullscreenBtn = document.getElementById("fullscreen-btn");
+      const cursorOptionRadios = document.querySelectorAll(
+        'input[name="mouseCursor"]'
+      );
+      const bubbleStyleRadios = document.querySelectorAll(
+        'input[name="bubbleStyle"]'
+      );
+      const greenCursorImg = document.getElementById("green-cursor-img");
+      const blueCursorImg = document.getElementById("blue-cursor-img");
+
+      const TEXT_INITIAL = "CONTINUE?";
+      const TEXT_FINAL = "INSERT COIN";
+      const FONT_FAMILY = "'Press Start 2P'";
+      const PARTICLE_DENSITY = 2;
+      const EASE_FACTOR = 0.05;
+      const MAX_MOUSE_BUBBLES = 50;
+      let textParticles = [];
+      let mouseBubbles = [];
+      let characters = [];
+      let animationFrameId;
+      let scrollProgress = 0;
+      let frameCounter = 0;
+      let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      let bubbleEmitter = {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      };
+      let draggedCharacter = null;
+      let isMusicPlaying = false;
+      let currentCursorType = "default";
+      let currentBubbleStyle = "original";
+      let cursorImage = null;
+      const cursorSize = 32;
+
+      class TextParticle {
+        constructor() {
+          this.originX = Math.random() * canvas.width;
+          this.originY = Math.random() * canvas.height;
+          this.x = this.originX;
+          this.y = this.originY;
+          this.continueTargetX = this.originX;
+          this.continueTargetY = this.originY;
+          this.insertCoinTargetX = this.originX;
+          this.insertCoinTargetY = this.originY;
+          this.radius = Math.random() * 2 + 1.5;
+          this.waveAngleX = Math.random() * Math.PI * 2;
+          this.waveAngleY = Math.random() * Math.PI * 2;
+          this.opacity = 0;
+        }
+        update() {
+          const textAppearStart = 0.1;
+          const textAppearEnd = 0.4;
+          if (scrollProgress > textAppearStart) {
+            const appearProgress =
+              (scrollProgress - textAppearStart) /
+              (textAppearEnd - textAppearStart);
+            this.opacity = Math.min(1, appearProgress);
+          } else {
+            this.opacity = 0;
+          }
+          const textMoveStartProgress = 0.2;
+          let textProgress = 0;
+          if (scrollProgress > textMoveStartProgress) {
+            textProgress =
+              (scrollProgress - textMoveStartProgress) /
+              (1 - textMoveStartProgress);
+          }
+          let currentTargetX, currentTargetY;
+          const transitionPoint = 0.6;
+          if (textProgress < transitionPoint) {
+            const phaseProgress = textProgress / transitionPoint;
+            currentTargetX =
+              this.originX +
+              (this.continueTargetX - this.originX) * phaseProgress;
+            currentTargetY =
+              this.originY +
+              (this.continueTargetY - this.originY) * phaseProgress;
+          } else {
+            const phaseProgress =
+              (textProgress - transitionPoint) / (1 - transitionPoint);
+            currentTargetX =
+              this.continueTargetX +
+              (this.insertCoinTargetX - this.continueTargetX) * phaseProgress;
+            currentTargetY =
+              this.continueTargetY +
+              (this.insertCoinTargetY - this.continueTargetY) * phaseProgress;
+          }
+          this.waveAngleX += 0.01;
+          this.waveAngleY += 0.015;
+          const floatingX =
+            Math.sin(this.waveAngleX) * 0.3 * (1 - textProgress);
+          const floatingY =
+            Math.cos(this.waveAngleY) * 0.3 * (1 - textProgress);
+          this.x += (currentTargetX - this.x) * EASE_FACTOR + floatingX;
+          this.y += (currentTargetY - this.y) * EASE_FACTOR + floatingY;
+        }
+        draw() {
+          if (this.opacity <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = this.opacity;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(
+            this.x - this.radius * 0.3,
+            this.y - this.radius * 0.3,
+            this.radius * 0.15,
+            0,
+            Math.PI * 2
+          );
+          ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      class MouseBubble {
+        constructor(x, y, cursorType, bubbleStyle) {
+          this.x = x;
+          this.y = y;
+          this.radius = Math.random() * 15 + 5;
+          this.style = bubbleStyle;
+
+          const speed = Math.random() * 2 + 0.5;
+          const angle = Math.random() * Math.PI * 2;
+          this.vx = Math.cos(angle) * speed;
+          this.vy = Math.sin(angle) * speed;
+          this.lifespan = 120 + Math.random() * 120;
+          this.opacity = 1;
+
+          this.color = {
+            primary: "rgba(255, 255, 255, 0.8)",
+            secondary: "rgba(255, 255, 255, 0.7)",
+          };
+          if (cursorType === "green") {
+            this.color.primary = "rgba(0, 255, 0, 0.8)";
+            this.color.secondary = "rgba(255, 255, 0, 0.7)";
+          } else if (cursorType === "blue") {
+            this.color.primary = "rgba(0, 191, 255, 0.8)";
+            this.color.secondary = "rgba(135, 206, 250, 0.7)";
+          }
+        }
+        update() {
+          this.y += this.vy;
+          this.x += this.vx;
+          if (this.lifespan < 60) {
+            this.opacity = this.lifespan / 60;
+            this.radius *= 0.97;
+          }
+          this.lifespan--;
+        }
+        draw() {
+          if (this.radius < 0.5) return;
+          ctx.save();
+          ctx.globalAlpha = this.opacity;
+
+          if (this.style === "original") {
+            const gradient = ctx.createRadialGradient(
+              this.x - this.radius * 0.3,
+              this.y - this.radius * 0.3,
+              this.radius * 0.1,
+              this.x,
+              this.y,
+              this.radius
+            );
+            gradient.addColorStop(0, this.color.secondary);
+            gradient.addColorStop(1, this.color.primary);
+
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = this.color.primary;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          } else {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = this.color.primary;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(
+              this.x - this.radius * 0.3,
+              this.y - this.radius * 0.3,
+              this.radius * 0.2,
+              0,
+              Math.PI * 2
+            );
+            ctx.fillStyle = this.color.secondary;
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+      class Character {
+        constructor(image, startX, startY, size = 80) {
+          this.image = image;
+          this.x = startX;
+          this.y = startY;
+          this.baseVx = (Math.random() - 0.5) * 8;
+          this.baseVy = (Math.random() - 0.5) * 8;
+          this.vx = this.baseVx;
+          this.vy = this.baseVy;
+          this.size = size;
+          this.opacity = 0;
+          this.characterRotation = 0;
+          this.bubbleRotation = 0;
+          this.rotationSpeed = 0;
+          this.bubbleRotationSpeed = 0;
+          this.bubbleSize = this.size * 0.7;
+          this.isDragged = false;
+          this.isHovered = false;
+        }
+        update(progress) {
+          const appearStart = 0.1;
+          const appearEnd = 0.3;
+          if (progress > appearStart) {
+            let appearProgress =
+              (progress - appearStart) / (appearEnd - appearStart);
+            this.opacity = Math.min(1, appearProgress);
+          } else {
+            this.opacity = 0;
+          }
+          if (!this.isDragged) {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.isHovered) {
+              this.vx *= 0.92;
+              this.vy *= 0.92;
+            } else {
+              const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+              const baseSpeed = Math.sqrt(
+                this.baseVx * this.baseVx + this.baseVy * this.baseVy
+              );
+              if (speed > baseSpeed) {
+                this.vx *= 0.985;
+                this.vy *= 0.985;
+              } else {
+                this.vx += (this.baseVx - this.vx) * 0.05;
+                this.vy += (this.baseVy - this.vy) * 0.05;
+              }
+            }
+          }
+          const bounceZone = {
+            left: canvas.width * 0.1,
+            right: canvas.width * 0.9,
+            top: canvas.height * 0.1,
+            bottom: canvas.height * 0.9,
+          };
+          if (this.x - this.bubbleSize < bounceZone.left) {
+            this.vx *= -1;
+            this.baseVx *= -1;
+            this.x = bounceZone.left + this.bubbleSize;
+            this.rotationSpeed = this.vy * 0.03;
+            this.bubbleRotationSpeed = this.vy * 0.015;
+          } else if (this.x + this.bubbleSize > bounceZone.right) {
+            this.vx *= -1;
+            this.baseVx *= -1;
+            this.x = bounceZone.right - this.bubbleSize;
+            this.rotationSpeed = this.vy * 0.03;
+            this.bubbleRotationSpeed = this.vy * 0.015;
+          }
+          if (this.y - this.bubbleSize < bounceZone.top) {
+            this.vy *= -1;
+            this.baseVy *= -1;
+            this.y = bounceZone.top + this.bubbleSize;
+            this.rotationSpeed = -this.vx * 0.03;
+            this.bubbleRotationSpeed = -this.vx * 0.015;
+          } else if (this.y + this.bubbleSize > bounceZone.bottom) {
+            this.vy *= -1;
+            this.baseVy *= -1;
+            this.y = bounceZone.bottom - this.bubbleSize;
+            this.rotationSpeed = -this.vx * 0.03;
+            this.bubbleRotationSpeed = -this.vx * 0.015;
+          }
+          this.characterRotation += this.rotationSpeed;
+          this.rotationSpeed *= 0.97;
+          this.bubbleRotation += this.bubbleRotationSpeed;
+          this.bubbleRotationSpeed *= 0.97;
+        }
+        draw() {
+          if (this.opacity <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = this.opacity;
+          ctx.translate(this.x, this.y);
+          ctx.save();
+          ctx.rotate(this.bubbleRotation);
+          ctx.save();
+          ctx.rotate(this.characterRotation);
+          ctx.drawImage(
+            this.image,
+            -this.size / 2,
+            -this.size / 2,
+            this.size,
+            this.size
+          );
+          ctx.restore();
+          ctx.beginPath();
+          ctx.arc(0, 0, this.bubbleSize, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.restore();
+          ctx.beginPath();
+          ctx.arc(
+            -this.bubbleSize * 0.3,
+            -this.bubbleSize * 0.3,
+            this.bubbleSize * 0.2,
+            0,
+            Math.PI * 2
+          );
+          ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+          ctx.fill();
+          ctx.restore();
+        }
+        boost() {
+          this.vx = (Math.random() - 0.5) * 60;
+          this.vy = (Math.random() - 0.5) * 60;
+          this.rotationSpeed = (Math.random() - 0.5) * 0.8;
+          this.bubbleRotationSpeed = (Math.random() - 0.5) * 0.4;
+        }
+      }
+
+      function getPixelDataFromText(text, fontSize) {
+        const tempParticles = [];
+        const tempCanvas = document.createElement("canvas");
+        const tempCtx = tempCanvas.getContext("2d");
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        tempCtx.fillStyle = "white";
+        tempCtx.font = `${fontSize}px ${FONT_FAMILY}`;
+        tempCtx.textAlign = "center";
+        tempCtx.textBaseline = "middle";
+        tempCtx.fillText(text, canvas.width / 2, canvas.height / 2);
+        const imageData = tempCtx.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        ).data;
+        for (let y = 0; y < canvas.height; y += PARTICLE_DENSITY) {
+          for (let x = 0; x < canvas.width; x += PARTICLE_DENSITY) {
+            if (imageData[(y * canvas.width + x) * 4 + 3] > 128) {
+              tempParticles.push({ x: x, y: y });
+            }
+          }
+        }
+        return tempParticles;
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        frameCounter++;
+        textParticles.forEach((p) => {
+          p.update();
+          p.draw();
+        });
+        if (logoContainer.classList.contains("hidden")) {
+          characters.forEach((c) => {
+            c.update(scrollProgress);
+            c.draw();
+          });
+        }
+
+        bubbleEmitter.x += (mouse.x - bubbleEmitter.x) * 0.25;
+        bubbleEmitter.y += (mouse.y - bubbleEmitter.y) * 0.25;
+        if (frameCounter % 4 === 0 && mouseBubbles.length < MAX_MOUSE_BUBBLES) {
+          mouseBubbles.push(
+            new MouseBubble(
+              bubbleEmitter.x,
+              bubbleEmitter.y,
+              currentCursorType,
+              currentBubbleStyle
+            )
+          );
+        }
+        mouseBubbles = mouseBubbles.filter((b) => b.lifespan > 0);
+        mouseBubbles.forEach((b) => {
+          b.update();
+          b.draw();
+        });
+
+        if (currentCursorType === "default") {
+          ctx.beginPath();
+          ctx.arc(mouse.x, mouse.y, 6, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+          ctx.fill();
+        } else if (cursorImage) {
+          ctx.drawImage(
+            cursorImage,
+            mouse.x - cursorSize / 2,
+            mouse.y - cursorSize / 2,
+            cursorSize,
+            cursorSize
+          );
+        }
+
+        requestAnimationFrame(animate);
+      }
+      function handleScroll() {
+        const scrollTop =
+          window.pageYOffset || document.documentElement.scrollTop;
+        const scrollHeight =
+          document.documentElement.scrollHeight -
+          document.documentElement.clientHeight;
+        const animationStartPoint = 0.1;
+        const animationEndPoint = 0.7;
+        const currentScroll = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+        scrollProgress =
+          (currentScroll - animationStartPoint) /
+          (animationEndPoint - animationStartPoint);
+        scrollProgress = Math.min(1, Math.max(0, scrollProgress));
+        if (scrollTop > window.innerHeight * 0.1) {
+          logoContainer.classList.add("hidden");
+        } else {
+          logoContainer.classList.remove("hidden");
+        }
+      }
+      function init() {
+        const greenCharImage = document.getElementById("green-char-img");
+        const blueCharImage = document.getElementById("blue-char-img");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        if (canvas.width === 0 || canvas.height === 0) {
+          requestAnimationFrame(init);
+          return;
+        }
+        const continueTargets = getPixelDataFromText(TEXT_INITIAL, 50);
+        const insertCoinTargets = getPixelDataFromText(TEXT_FINAL, 50);
+        textParticles = [];
+        const numParticles = Math.max(
+          continueTargets.length,
+          insertCoinTargets.length
+        );
+        for (let i = 0; i < numParticles; i++) {
+          const p = new TextParticle();
+          const continueTarget = continueTargets[i % continueTargets.length];
+          p.continueTargetX = continueTarget.x;
+          p.continueTargetY = continueTarget.y;
+          const insertCoinTarget =
+            insertCoinTargets[i % insertCoinTargets.length];
+          p.insertCoinTargetX = insertCoinTarget.x;
+          p.insertCoinTargetY = insertCoinTarget.y;
+          textParticles.push(p);
+        }
+        const startY = canvas.height * 0.45;
+        characters = [];
+        characters.push(
+          new Character(greenCharImage, canvas.width * 0.3, startY, 80)
+        );
+        characters.push(
+          new Character(blueCharImage, canvas.width * 0.7, startY, 80)
+        );
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+        animate();
+      }
+      function startBootingAnimation() {
+        const bootingText = document.getElementById("booting-text");
+        const loadingBar = document.getElementById("loading-bar");
+        return new Promise((resolve) => {
+          let progress = 0;
+          const duration = 2500;
+          const intervalTime = 25;
+          const animationInterval = setInterval(() => {
+            progress += (intervalTime / duration) * 100;
+            if (progress >= 100) {
+              progress = 100;
+              loadingBar.style.width = `${progress}%`;
+              bootingText.textContent = `COMPLETE!`;
+              clearInterval(animationInterval);
+              setTimeout(resolve, 500);
+            } else {
+              loadingBar.style.width = `${progress}%`;
+              bootingText.textContent = `NOW LOADING... ${Math.floor(
+                progress
+              )}%`;
+            }
+          }, intervalTime);
+        });
+      }
+
+      const images = [
+        document.getElementById("logo-image"),
+        document.getElementById("green-char-img"),
+        document.getElementById("blue-char-img"),
+        greenCursorImg,
+        blueCursorImg,
+      ];
+      const assetPromises = images.map((img) => {
+        return new Promise((resolve, reject) => {
+          if (img.complete) resolve();
+          else {
+            img.onload = resolve;
+            img.onerror = reject;
+          }
+        });
+      });
+      const assetsLoaded = Promise.all(assetPromises).then(
+        () => document.fonts.ready
+      );
+      const bootAnimationFinished = startBootingAnimation();
+      Promise.all([assetsLoaded, bootAnimationFinished])
+        .then(() => {
+          bootingScreen.classList.add("hidden");
+          init();
+          settingsBtn.classList.add("visible");
+          bgm.volume = volumeSlider.value / 100;
+          bootingScreen.addEventListener(
+            "transitionend",
+            () => {
+              bootingScreen.style.display = "none";
+            },
+            { once: true }
+          );
+        })
+        .catch((err) => {
+          const bootingText = document.getElementById("booting-text");
+          bootingText.textContent = "Error loading assets.";
+        });
+
+      settingsBtn.addEventListener("click", () => {
+        settingsModal.classList.toggle("visible");
+      });
+
+      settingsModal.addEventListener("click", (event) => {
+        if (event.target === settingsModal) {
+          settingsModal.classList.remove("visible");
+        }
+      });
+
+      bgmCheckbox.addEventListener("click", () => {
+        isMusicPlaying = !isMusicPlaying;
+        bgmCheckbox.classList.toggle("checked", isMusicPlaying);
+        if (isMusicPlaying) {
+          bgm.play().catch((e) => console.error("음악 재생 실패:", e));
+        } else {
+          bgm.pause();
+        }
+      });
+
+      volumeSlider.addEventListener("input", () => {
+        const volume = volumeSlider.value;
+        volumeValue.textContent = volume;
+        bgm.volume = volume / 100;
+      });
+
+      fullscreenBtn.addEventListener("click", () => {
+        if (!document.fullscreenElement) {
+          document.documentElement
+            .requestFullscreen()
+            .catch((e) => console.error(e));
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      });
+
+      cursorOptionRadios.forEach((radio) => {
+        radio.addEventListener("change", (event) => {
+          currentCursorType = event.target.value;
+          updateCursorDisplay();
+
+          document
+            .querySelectorAll('input[name="mouseCursor"] + .custom-radio')
+            .forEach((cr) => cr.classList.remove("checked"));
+          event.target.nextElementSibling.classList.add("checked");
+        });
+      });
+
+      bubbleStyleRadios.forEach((radio) => {
+        radio.addEventListener("change", (event) => {
+          currentBubbleStyle = event.target.value;
+
+          document
+            .querySelectorAll('input[name="bubbleStyle"] + .custom-radio')
+            .forEach((cr) => cr.classList.remove("checked"));
+          event.target.nextElementSibling.classList.add("checked");
+        });
+      });
+
+      function updateCursorDisplay() {
+        if (currentCursorType === "default") {
+          cursorImage = null;
+          document.body.classList.remove("custom-cursor");
+        } else if (currentCursorType === "green") {
+          cursorImage = greenCursorImg;
+          document.body.classList.add("custom-cursor");
+        } else if (currentCursorType === "blue") {
+          cursorImage = blueCursorImg;
+          document.body.classList.add("custom-cursor");
+        }
+      }
+
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      window.addEventListener("mousemove", (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+        if (draggedCharacter) {
+          draggedCharacter.x = mouse.x;
+          draggedCharacter.y = mouse.y;
+        } else {
+          characters.forEach((c) => {
+            const distance = Math.sqrt(
+              Math.pow(mouse.x - c.x, 2) + Math.pow(mouse.y - c.y, 2)
+            );
+            c.isHovered = distance < c.bubbleSize;
+          });
+        }
+      });
+      window.addEventListener("mousedown", (e) => {
+        if (logoContainer.classList.contains("hidden")) {
+          const clickX = e.clientX;
+          const clickY = e.clientY;
+          for (let i = characters.length - 1; i >= 0; i--) {
+            const c = characters[i];
+            const distance = Math.sqrt(
+              Math.pow(clickX - c.x, 2) + Math.pow(clickY - c.y, 2)
+            );
+            if (distance < c.bubbleSize) {
+              draggedCharacter = c;
+              c.isDragged = true;
+              c.boost();
+              break;
+            }
+          }
+        }
+      });
+      window.addEventListener("mouseup", () => {
+        if (draggedCharacter) {
+          draggedCharacter.isDragged = false;
+          draggedCharacter.vx = (mouse.x - bubbleEmitter.x) * 0.4;
+          draggedCharacter.vy = (mouse.y - bubbleEmitter.y) * 0.4;
+          draggedCharacter.rotationSpeed = draggedCharacter.vx * 0.05;
+          draggedCharacter.bubbleRotationSpeed = draggedCharacter.vy * 0.03;
+          draggedCharacter = null;
+        }
+      });
+      window.addEventListener("resize", () => {
+        init();
+      });
+
+      updateCursorDisplay();
+    </script>
+  </body>
+</html>
